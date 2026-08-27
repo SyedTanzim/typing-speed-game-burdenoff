@@ -1,6 +1,6 @@
 export function Footer() {
   const year = new Date().getFullYear();
-  const githubUrl = "https://github.com/YOUR-USERNAME/typing-speed-game-burdenoff";
+  const githubUrl = "https://github.com/SyedTanzim/typing-speed-game-burdenoff";
 
   return (
     <footer
