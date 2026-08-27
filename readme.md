@@ -4,6 +4,7 @@ A full-stack typing speed game. Type 20 randomly generated letters as fast as
 you can, beat your best time, and climb the leaderboard.
 
 **Live demo:** https://typing-speed-game-burdenoff.vercel.app/
+
 **Backend API:** https://typing-speed-game-burdenoff-production.up.railway.app/graphql
 
 ## Features
@@ -160,6 +161,8 @@ score are always scoped to the authenticated user via the JWT in the
   two logical "pages" added complexity the scope didn't need.
 
 ## Running Tests
+
+The backend includes an automated test suite covering game penalty calculations, high-score rules, leaderboard sorting, and password hashing utilities.
 
 ```bash
 cd backend
