@@ -136,59 +136,139 @@ export function TypingGame() {
     : elapsed + penaltyTime;
 
   return (
-    <section className="game-card" aria-labelledby="game-title">
-      <div className="card-heading"><div><span className="eyebrow">QUICK CHALLENGE</span><h2 id="game-title">Typing sprint</h2></div><span className="round-chip">20 letters</span></div>
+    <section
+      className="bg-white/90 border border-violet-100 rounded-2xl shadow-lg p-5 text-center min-h-[380px] flex flex-col"
+      aria-labelledby="game-title"
+    >
+      {/* Card heading */}
+      <div className="flex items-start justify-between text-left">
+        <div>
+          <span className="text-violet-600 text-xs font-bold tracking-widest uppercase">
+            QUICK CHALLENGE
+          </span>
+          <h2 id="game-title" className="m-0 text-2xl font-bold text-indigo-950">
+            Typing sprint
+          </h2>
+        </div>
+        <span className="bg-violet-50 text-slate-500 text-xs font-bold rounded-lg px-2.5 py-1.5">
+          20 letters
+        </span>
+      </div>
 
-      {bestScore !== null && (
-        <p className="best-score">
-          Your best <strong>{bestScore.toFixed(2)}s</strong>
+      {/* Best score - Top position (Playing/Finished) */}
+      {bestScore !== null && state !== "idle" && (
+        <p className="text-slate-500 text-sm mt-3 mb-1 shrink-0 text-left">
+          Your best <strong className="text-violet-600 ml-1">{bestScore.toFixed(2)}s</strong>
         </p>
       )}
 
-      {state === "idle" && (
-        <button
-          onClick={startGame}
-          className="filled-button"
-        >
-          Start Game
-        </button>
-      )}
-
-      {state === "playing" && (
-        <div className="game-play-area">
-          <div className="game-stats"><div><span>TIME</span><strong>{displayTime.toFixed(2)}s</strong></div><div><span>PROGRESS</span><strong>{currentIndex} / {TOTAL_CHARS}</strong></div></div>
-          <div className="progress-track" aria-label={`${currentIndex} of ${TOTAL_CHARS} letters completed`}><span style={{ width: `${(currentIndex / TOTAL_CHARS) * 100}%` }} /></div>
-          <p className="typing-hint">Press the key shown below</p>
-          <div className="letter-display" aria-live="polite">
-            {sequence[currentIndex]}
+      {/* Content wrapper */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full">
+        {/* Idle state — Start button */}
+        {state === "idle" && (
+          <div className="flex flex-col items-center">
+            {/* Best score - Centered position (Idle) */}
+            {bestScore !== null && (
+              <p className="text-slate-500 text-sm mb-4 mt-0">
+                Your best <strong className="text-violet-600 ml-1">{bestScore.toFixed(2)}s</strong>
+              </p>
+            )}
+            <button
+              onClick={startGame}
+              className="border-0 rounded-full bg-violet-600 hover:bg-violet-700 text-white h-11 px-6 font-bold tracking-wide shadow-md hover:shadow-lg transition-all active:translate-y-px"
+            >
+              Start Game
+            </button>
           </div>
-          {wrongAttempts > 0 && (
-            <p className="penalty-message">
-              Penalties: {wrongAttempts} (+{penaltyTime.toFixed(1)}s)
-            </p>
-          )}
-        </div>
-      )}
+        )}
 
-      {state === "finished" && (
-        <div className="game-result">
-          <div className={result === "success" ? "result-icon success" : "result-icon retry"} aria-hidden="true">{result === "success" ? "✓" : "↻"}</div>
-          <p className="final-time">{finalTime?.toFixed(2)}s</p>
-          <p className="result-title">
-            {result === "success" ? "Success!" : "Failure — Try Again"}
-          </p>
-          <p className="result-details">
-            Correct: {TOTAL_CHARS} | Wrong: {wrongAttempts} | Penalty: {penaltyTime.toFixed(1)}s
-          </p>
-          {saving && <p className="saving-message">Saving result...</p>}
-          <button
-            onClick={startGame}
-            className="filled-button"
-          >
-            Play Again
-          </button>
-        </div>
-      )}
+        {/* Playing state */}
+        {state === "playing" && (
+          <div className="w-full mt-1">
+            {/* Stats grid */}
+            <div className="grid grid-cols-2 text-left gap-3">
+              <div className="bg-violet-50/80 rounded-xl p-2.5 px-3">
+                <span className="block text-slate-500 text-[0.67rem] font-bold tracking-widest">
+                  TIME
+                </span>
+                <strong className="block mt-1 text-lg tabular-nums text-indigo-950">
+                  {displayTime.toFixed(2)}s
+                </strong>
+              </div>
+              <div className="bg-violet-50/80 rounded-xl p-2.5 px-3">
+                <span className="block text-slate-500 text-[0.67rem] font-bold tracking-widest">
+                  PROGRESS
+                </span>
+                <strong className="block mt-1 text-lg tabular-nums text-indigo-950">
+                  {currentIndex} / {TOTAL_CHARS}
+                </strong>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div
+              className="h-1.5 bg-violet-100 rounded-full overflow-hidden my-3"
+              aria-label={`${currentIndex} of ${TOTAL_CHARS} letters completed`}
+            >
+              <span
+                className="block h-full bg-violet-600 rounded-full transition-all duration-150"
+                style={{ width: `${(currentIndex / TOTAL_CHARS) * 100}%` }}
+              />
+            </div>
+
+            {/* Hint */}
+            <p className="text-slate-500 text-sm">Press the key shown below</p>
+
+            {/* Letter display */}
+            <div
+              className="w-28 h-28 mx-auto my-3 grid place-items-center bg-violet-100 text-violet-900 rounded-3xl text-6xl font-bold leading-none shadow-[inset_0_0_0_1px_rgba(109,40,217,0.08)]"
+              aria-live="polite"
+            >
+              {sequence[currentIndex]}
+            </div>
+
+            {/* Penalty */}
+            {wrongAttempts > 0 && (
+              <p className="text-red-600 text-sm font-semibold">
+                Penalties: {wrongAttempts} (+{penaltyTime.toFixed(1)}s)
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Finished state */}
+        {state === "finished" && (
+          <div className="grid justify-items-center gap-2.5">
+            <div
+              className={`w-13 h-13 rounded-2xl grid place-items-center text-2xl font-bold ${result === "success"
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-red-100 text-red-700"
+                }`}
+              aria-hidden="true"
+            >
+              {result === "success" ? "✓" : "↻"}
+            </div>
+            <p className="text-4xl font-bold tabular-nums text-indigo-950 m-0">
+              {finalTime?.toFixed(2)}s
+            </p>
+            <p className="text-lg font-bold text-indigo-950 m-0">
+              {result === "success" ? "Success!" : "Failure — Try Again"}
+            </p>
+            <p className="text-slate-500 text-sm m-0">
+              Correct: {TOTAL_CHARS} | Wrong: {wrongAttempts} | Penalty: {penaltyTime.toFixed(1)}s
+            </p>
+            {saving && (
+              <p className="text-slate-500 text-sm m-0">Saving result...</p>
+            )}
+            <button
+              onClick={startGame}
+              className="mt-3.5 border-0 rounded-full bg-violet-600 hover:bg-violet-700 text-white h-11 px-6 font-bold tracking-wide shadow-md hover:shadow-lg transition-all active:translate-y-px"
+            >
+              Play Again
+            </button>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
