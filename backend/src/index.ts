@@ -2,16 +2,20 @@ import { createYoga } from "graphql-yoga";
 import { schema } from "./schema";
 import { createContext } from "./context";
 
-const allowedOrigin = process.env.FRONTEND_URL ?? "http://localhost:5173";
-const cleanedOrigin = allowedOrigin.replace(/\/$/, "");
+const configuredOrigins =
+  process.env.FRONTEND_URLS ?? process.env.FRONTEND_URL ?? "http://localhost:5173";
+
+const allowedOrigins = configuredOrigins
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/$/, ""))
+  .filter(Boolean);
 
 const yoga = createYoga({
   schema,
   context: ({ request }) => createContext(request),
   graphqlEndpoint: "/graphql",
   cors: {
-    origin: [cleanedOrigin, "http://localhost:5173"],
-    credentials: true,
+    origin: [...new Set([...allowedOrigins, "http://localhost:5173"])],
   },
 });
 
