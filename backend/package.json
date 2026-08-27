@@ -20,8 +20,10 @@
     "jsonwebtoken": "^9.0.3",
     "zod": "^4.4.3"
   },
-  "scripts": {
-    "postinstall": "prisma skills sync || exit 0",
-    "dev": "bun run --watch src/index.ts"
-  }
+"scripts": {
+  "dev": "bun run --watch src/index.ts",
+  "start": "bun run src/index.ts",
+  "build": "bunx prisma generate",
+  "migrate:deploy": "bunx prisma migrate deploy"
+}
 }
