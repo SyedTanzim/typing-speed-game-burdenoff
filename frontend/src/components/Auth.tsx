@@ -26,16 +26,20 @@ export function Auth() {
     }
   }
 
-  return (
-    <div className="auth-container">
-      <h2>{mode === "login" ? "Login" : "Register"}</h2>
-      <form onSubmit={handleSubmit}>
+    return (
+    <section className="auth-card surface-card">
+      <span className="eyebrow">SAVE YOUR PROGRESS</span>
+      <h2>
+        {mode === "login" ? "Login" : "Register"}
+      </h2>
+      <form onSubmit={handleSubmit} className="auth-form">
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          className="material-input"
         />
         <input
           type="password"
@@ -44,20 +48,25 @@ export function Auth() {
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={6}
+          className="material-input"
         />
-        {error && <p className="error-text">{error}</p>}
-        <button type="submit" disabled={loading}>
+        {error && <p className="form-error">{error}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          className="filled-button"
+        >
           {loading ? "Please wait..." : mode === "login" ? "Login" : "Register"}
         </button>
       </form>
       <button
-        className="link-button"
         onClick={() => setMode(mode === "login" ? "register" : "login")}
+        className="text-button auth-switch"
       >
         {mode === "login"
           ? "Need an account? Register"
           : "Already have an account? Login"}
       </button>
-    </div>
+    </section>
   );
 }

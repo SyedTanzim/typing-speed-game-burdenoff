@@ -136,26 +136,34 @@ export function TypingGame() {
     : elapsed + penaltyTime;
 
   return (
-    <div className="game-container">
-      <h2>Typing Speed Game</h2>
+    <section className="game-card" aria-labelledby="game-title">
+      <div className="card-heading"><div><span className="eyebrow">QUICK CHALLENGE</span><h2 id="game-title">Typing sprint</h2></div><span className="round-chip">20 letters</span></div>
 
       {bestScore !== null && (
-        <p className="best-score">Best: {bestScore.toFixed(2)}s</p>
+        <p className="best-score">
+          Your best <strong>{bestScore.toFixed(2)}s</strong>
+        </p>
       )}
 
       {state === "idle" && (
-        <button onClick={startGame} className="start-button">
+        <button
+          onClick={startGame}
+          className="filled-button"
+        >
           Start Game
         </button>
       )}
 
       {state === "playing" && (
-        <div className="game-active">
-          <p className="timer">{displayTime.toFixed(2)}s</p>
-          <p className="progress">{currentIndex} / {TOTAL_CHARS}</p>
-          <div className="current-letter">{sequence[currentIndex]}</div>
+        <div className="game-play-area">
+          <div className="game-stats"><div><span>TIME</span><strong>{displayTime.toFixed(2)}s</strong></div><div><span>PROGRESS</span><strong>{currentIndex} / {TOTAL_CHARS}</strong></div></div>
+          <div className="progress-track" aria-label={`${currentIndex} of ${TOTAL_CHARS} letters completed`}><span style={{ width: `${(currentIndex / TOTAL_CHARS) * 100}%` }} /></div>
+          <p className="typing-hint">Press the key shown below</p>
+          <div className="letter-display" aria-live="polite">
+            {sequence[currentIndex]}
+          </div>
           {wrongAttempts > 0 && (
-            <p className="penalty-note">
+            <p className="penalty-message">
               Penalties: {wrongAttempts} (+{penaltyTime.toFixed(1)}s)
             </p>
           )}
@@ -164,17 +172,23 @@ export function TypingGame() {
 
       {state === "finished" && (
         <div className="game-result">
+          <div className={result === "success" ? "result-icon success" : "result-icon retry"} aria-hidden="true">{result === "success" ? "✓" : "↻"}</div>
           <p className="final-time">{finalTime?.toFixed(2)}s</p>
-          <p className={result === "success" ? "success-text" : "failure-text"}>
+          <p className="result-title">
             {result === "success" ? "Success!" : "Failure — Try Again"}
           </p>
-          <p>Correct: {TOTAL_CHARS} | Wrong: {wrongAttempts} | Penalty: {penaltyTime.toFixed(1)}s</p>
-          {saving && <p>Saving result...</p>}
-          <button onClick={startGame} className="start-button">
+          <p className="result-details">
+            Correct: {TOTAL_CHARS} | Wrong: {wrongAttempts} | Penalty: {penaltyTime.toFixed(1)}s
+          </p>
+          {saving && <p className="saving-message">Saving result...</p>}
+          <button
+            onClick={startGame}
+            className="filled-button"
+          >
             Play Again
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 }
