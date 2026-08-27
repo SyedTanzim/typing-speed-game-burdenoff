@@ -35,7 +35,19 @@ const server = Bun.serve({
     if (url.pathname === "/health") {
       try {
         await prisma.$queryRaw`SELECT 1`;
-        return Response.json({ ok: true, database: "connected" });
+        const [users, gameResults] = await Promise.all([
+          prisma.user.count(),
+          prisma.gameResult.count(),
+        ]);
+
+        return Response.json({
+          ok: true,
+          database: "connected",
+          tables: {
+            users,
+            gameResults,
+          },
+        });
       } catch (error) {
         console.error("Database health check failed", error);
         return Response.json(
