@@ -5,7 +5,6 @@ import { SAVE_GAME_RESULT_MUTATION } from "../api/queries";
 
 const TOTAL_CHARS = 20;
 const PENALTY_SECONDS = 0.5;
-const BEST_SCORE_KEY = "typing_game_best_score";
 
 function generateLetters(count: number): string[] {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -21,7 +20,7 @@ type TypingGameProps = {
 };
 
 export function TypingGame({ onResultSaved }: TypingGameProps) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [sequence, setSequence] = useState<string[]>(() => generateLetters(TOTAL_CHARS));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [state, setState] = useState<GameState>("idle");
@@ -31,16 +30,48 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
   const [finalTime, setFinalTime] = useState<number | null>(null);
   const [result, setResult] = useState<"success" | "failure" | null>(null);
   const [saving, setSaving] = useState(false);
+  const [bestScore, setBestScore] = useState<number | null>(null);
 
   const startTimeRef = useRef<number | null>(null);
   const intervalRef = useRef<number | null>(null);
-  const penaltyRef = useRef(0); // avoids stale closure issues in keydown handler
+  const penaltyRef = useRef(0);
   const wrongRef = useRef(0);
 
-  const bestScore = (() => {
-    const stored = localStorage.getItem(BEST_SCORE_KEY);
-    return stored ? parseFloat(stored) : null;
-  })();
+  // User-scoped storage key helper (prevents score sharing between accounts)
+  const getStorageKey = useCallback(() => {
+    return user?.id ? `typing_game_best_score_${user.id}` : "typing_game_best_score_guest";
+  }, [user?.id]);
+
+  // Sync best score when switching users or logging in/out
+  useEffect(() => {
+    const loadBestScore = async () => {
+      const key = getStorageKey();
+      const stored = localStorage.getItem(key);
+      let currentBest = stored ? parseFloat(stored) : null;
+
+      if (token) {
+        try {
+          const client = getClient(token);
+          const data = await client.request<{ myBestScore?: { timeSeconds: number } | null }>(
+            `query { myBestScore { timeSeconds } }`
+          );
+          if (data?.myBestScore?.timeSeconds) {
+            const serverBest = data.myBestScore.timeSeconds;
+            if (currentBest === null || serverBest < currentBest) {
+              currentBest = serverBest;
+              localStorage.setItem(key, serverBest.toFixed(2));
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch user best score:", err);
+        }
+      }
+
+      setBestScore(currentBest);
+    };
+
+    loadBestScore();
+  }, [user?.id, token, getStorageKey]);
 
   const startGame = useCallback(() => {
     setSequence(generateLetters(TOTAL_CHARS));
@@ -75,7 +106,7 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
   const finishGame = useCallback(async () => {
     if (startTimeRef.current === null) return;
     const rawElapsed = (Date.now() - startTimeRef.current) / 1000;
-    const total = rawElapsed + penaltyRef.current;
+    const total = parseFloat((rawElapsed + penaltyRef.current).toFixed(2));
 
     setState("finished");
     setFinalTime(total);
@@ -84,7 +115,8 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
     setResult(isSuccess ? "success" : "failure");
 
     if (isSuccess) {
-      localStorage.setItem(BEST_SCORE_KEY, total.toFixed(2));
+      setBestScore(total);
+      localStorage.setItem(getStorageKey(), total.toFixed(2));
     }
 
     if (token) {
@@ -92,7 +124,7 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
       try {
         const client = getClient(token);
         await client.request(SAVE_GAME_RESULT_MUTATION, {
-          timeSeconds: parseFloat(total.toFixed(2)),
+          timeSeconds: total,
           correctChars: TOTAL_CHARS,
           wrongAttempts: wrongRef.current,
           penaltyTime: parseFloat(penaltyRef.current.toFixed(2)),
@@ -104,15 +136,15 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
         setSaving(false);
       }
     }
-  }, [token, bestScore, onResultSaved]);
+  }, [token, bestScore, onResultSaved, getStorageKey]);
 
-  // Keyboard handling
+  // Keyboard event handler
   useEffect(() => {
     if (state !== "playing") return;
 
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.repeat) return; // ignore auto-repeat from held keys
-      
+      if (e.repeat) return;
+
       const key = e.key.toUpperCase();
       if (key.length !== 1 || key < "A" || key > "Z") return;
 
@@ -171,13 +203,16 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
 
       {/* Content wrapper */}
       <div className="flex-1 flex flex-col items-center justify-center w-full">
-        {/* Idle state — Start button */}
+        {/* Idle state */}
         {state === "idle" && (
           <div className="flex flex-col items-center">
-            {/* Best score - Centered position (Idle) */}
-            {bestScore !== null && (
+            {bestScore !== null ? (
               <p className="text-slate-500 text-sm mb-4 mt-0">
                 Your best <strong className="text-violet-600 ml-1">{bestScore.toFixed(2)}s</strong>
+              </p>
+            ) : (
+              <p className="text-slate-400 text-sm mb-4 mt-0">
+                No best time recorded yet
               </p>
             )}
             <button
@@ -192,7 +227,6 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
         {/* Playing state */}
         {state === "playing" && (
           <div className="w-full mt-1">
-            {/* Stats grid */}
             <div className="grid grid-cols-2 text-left gap-3">
               <div className="bg-violet-50/80 rounded-xl p-2.5 px-3">
                 <span className="block text-slate-500 text-[0.67rem] font-bold tracking-widest">
@@ -212,7 +246,6 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
               </div>
             </div>
 
-            {/* Progress bar */}
             <div
               className="h-1.5 bg-violet-100 rounded-full overflow-hidden my-3"
               aria-label={`${currentIndex} of ${TOTAL_CHARS} letters completed`}
@@ -223,10 +256,8 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
               />
             </div>
 
-            {/* Hint */}
             <p className="text-slate-500 text-sm">Press the key shown below</p>
 
-            {/* Letter display */}
             <div
               className="w-28 h-28 mx-auto my-3 grid place-items-center bg-violet-100 text-violet-900 rounded-3xl text-6xl font-bold leading-none shadow-[inset_0_0_0_1px_rgba(109,40,217,0.08)]"
               aria-live="polite"
@@ -234,7 +265,6 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
               {sequence[currentIndex]}
             </div>
 
-            {/* Penalty */}
             {wrongAttempts > 0 && (
               <p className="text-red-600 text-sm font-semibold">
                 Penalties: {wrongAttempts} (+{penaltyTime.toFixed(1)}s)
@@ -247,10 +277,11 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
         {state === "finished" && (
           <div className="grid justify-items-center gap-2.5">
             <div
-              className={`w-13 h-13 rounded-2xl grid place-items-center text-2xl font-bold ${result === "success"
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-red-100 text-red-700"
-                }`}
+              className={`w-13 h-13 rounded-2xl grid place-items-center text-2xl font-bold ${
+                result === "success"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-red-100 text-red-700"
+              }`}
               aria-hidden="true"
             >
               {result === "success" ? "✓" : "↻"}

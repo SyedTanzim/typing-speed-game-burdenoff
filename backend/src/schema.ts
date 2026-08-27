@@ -79,10 +79,15 @@ const resolvers = {
     },
 
     myBestScore: async (_parent: unknown, _args: unknown, ctx: GraphQLContext) => {
-      const userId = requireAuth(ctx);
+      if (!ctx.userId) return null;
+
       return ctx.prisma.gameResult.findFirst({
-        where: { userId },
-        orderBy: { timeSeconds: "asc" },
+        where: {
+          userId: ctx.userId,
+        },
+        orderBy: {
+          timeSeconds: "asc",
+        },
       });
     },
 
@@ -93,7 +98,6 @@ const resolvers = {
     ) => {
       const limit = args.limit ?? 10;
 
-      // Best time per user, then sorted ascending (lower = better)
       const results = await ctx.prisma.gameResult.findMany({
         orderBy: { timeSeconds: "asc" },
         include: { user: { select: { email: true } } },
