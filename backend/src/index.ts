@@ -3,13 +3,14 @@ import { schema } from "./schema";
 import { createContext } from "./context";
 
 const allowedOrigin = process.env.FRONTEND_URL ?? "http://localhost:5173";
+const cleanedOrigin = allowedOrigin.replace(/\/$/, "");
 
 const yoga = createYoga({
   schema,
   context: ({ request }) => createContext(request),
   graphqlEndpoint: "/graphql",
   cors: {
-    origin: allowedOrigin,
+    origin: [cleanedOrigin, "http://localhost:5173"],
     credentials: true,
   },
 });
