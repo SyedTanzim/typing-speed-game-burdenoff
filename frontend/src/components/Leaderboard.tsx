@@ -16,19 +16,28 @@ export function Leaderboard({ userEmail, onOpenAuth, refreshKey = 0 }: Leaderboa
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       try {
         setError(null);
         const client = getClient();
         const data: any = await client.request(LEADERBOARD_QUERY, { limit: 10 });
-        setEntries(data.leaderboard);
+        if (!cancelled) setEntries(data.leaderboard);
       } catch (err) {
-        setError("Failed to load leaderboard");
+        if (!cancelled) setError("Failed to load leaderboard");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
+
     load();
+    window.addEventListener("focus", load);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", load);
+    };
   }, [refreshKey]);
 
   // If not signed in and there's an error, show a friendly prompt instead of the error

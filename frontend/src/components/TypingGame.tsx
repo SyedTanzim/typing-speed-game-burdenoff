@@ -111,6 +111,8 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
     if (state !== "playing") return;
 
     function handleKeyDown(e: KeyboardEvent) {
+      if (e.repeat) return; // ignore auto-repeat from held keys
+      
       const key = e.key.toUpperCase();
       if (key.length !== 1 || key < "A" || key > "Z") return;
 
