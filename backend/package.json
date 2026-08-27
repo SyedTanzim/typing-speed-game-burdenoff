@@ -24,6 +24,7 @@
     "dev": "bun run --watch src/index.ts",
     "start": "bunx prisma migrate deploy && bun run src/index.ts",
     "build": "bunx prisma generate",
-    "migrate:deploy": "bunx prisma migrate deploy"
+    "migrate:deploy": "bunx prisma migrate deploy",
+    "test": "bun test"
   }
 }
