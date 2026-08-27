@@ -10,6 +10,7 @@ function App() {
   const { user, logout } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0);
 
   function openAuth(mode: "login" | "register") {
     setAuthMode(mode);
@@ -47,11 +48,17 @@ function App() {
           <div className="hidden lg:block flex-1 max-w-[340px]"></div>
 
           <div className="w-full max-w-xl mx-auto lg:mx-0 shrink-0">
-            <TypingGame />
+            <TypingGame
+              onResultSaved={() => setLeaderboardRefreshKey((key) => key + 1)}
+            />
           </div>
 
           <div className="w-full max-w-xl mx-auto lg:mx-0 lg:flex-1 lg:max-w-[340px]">
-            <Leaderboard userEmail={user?.email} onOpenAuth={openAuth} />
+            <Leaderboard
+              userEmail={user?.email}
+              onOpenAuth={openAuth}
+              refreshKey={leaderboardRefreshKey}
+            />
           </div>
         </div>
       </main>

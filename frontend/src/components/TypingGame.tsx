@@ -16,7 +16,11 @@ function generateLetters(count: number): string[] {
 
 type GameState = "idle" | "playing" | "finished";
 
-export function TypingGame() {
+type TypingGameProps = {
+  onResultSaved?: () => void;
+};
+
+export function TypingGame({ onResultSaved }: TypingGameProps) {
   const { token } = useAuth();
   const [sequence, setSequence] = useState<string[]>(() => generateLetters(TOTAL_CHARS));
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -93,13 +97,14 @@ export function TypingGame() {
           wrongAttempts: wrongRef.current,
           penaltyTime: parseFloat(penaltyRef.current.toFixed(2)),
         });
+        onResultSaved?.();
       } catch (err) {
         console.error("Failed to save game result:", err);
       } finally {
         setSaving(false);
       }
     }
-  }, [token, bestScore]);
+  }, [token, bestScore, onResultSaved]);
 
   // Keyboard handling
   useEffect(() => {

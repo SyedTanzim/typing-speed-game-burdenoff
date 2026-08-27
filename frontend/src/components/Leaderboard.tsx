@@ -7,9 +7,10 @@ type Entry = { email: string; bestTime: number };
 type LeaderboardProps = {
   userEmail?: string | null;
   onOpenAuth: (mode: "login" | "register") => void;
+  refreshKey?: number;
 };
 
-export function Leaderboard({ userEmail, onOpenAuth }: LeaderboardProps) {
+export function Leaderboard({ userEmail, onOpenAuth, refreshKey = 0 }: LeaderboardProps) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,6 +18,7 @@ export function Leaderboard({ userEmail, onOpenAuth }: LeaderboardProps) {
   useEffect(() => {
     async function load() {
       try {
+        setError(null);
         const client = getClient();
         const data: any = await client.request(LEADERBOARD_QUERY, { limit: 10 });
         setEntries(data.leaderboard);
@@ -27,7 +29,7 @@ export function Leaderboard({ userEmail, onOpenAuth }: LeaderboardProps) {
       }
     }
     load();
-  }, []);
+  }, [refreshKey]);
 
   // If not signed in and there's an error, show a friendly prompt instead of the error
   if (!userEmail && error) {

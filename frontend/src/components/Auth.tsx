@@ -1,11 +1,24 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { API_ENDPOINT } from "../api/graphqlClient";
 
 type AuthProps = {
   initialMode?: "login" | "register";
   onClose?: () => void;
   onSuccess?: () => void;
 };
+
+function getAuthErrorMessage(err: unknown) {
+  const graphQLError = (err as any)?.response?.errors?.[0]?.message;
+  if (graphQLError) return graphQLError;
+
+  const message = err instanceof Error ? err.message : "";
+  if (message.toLowerCase().includes("failed to fetch")) {
+    return `Could not reach the API at ${API_ENDPOINT}. Check VITE_API_URL on Vercel and CORS FRONTEND_URLS on Railway.`;
+  }
+
+  return message || "Something went wrong";
+}
 
 export function Auth({ initialMode = "login", onClose, onSuccess }: AuthProps) {
   const { login, register } = useAuth();
@@ -27,7 +40,7 @@ export function Auth({ initialMode = "login", onClose, onSuccess }: AuthProps) {
       }
       onSuccess?.();
     } catch (err: any) {
-      setError(err?.response?.errors?.[0]?.message ?? "Something went wrong");
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
