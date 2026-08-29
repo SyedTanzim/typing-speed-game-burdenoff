@@ -2,16 +2,16 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getClient } from "../api/graphqlClient";
 import { SAVE_GAME_RESULT_MUTATION } from "../api/queries";
-
-const TOTAL_CHARS = 20;
-const PENALTY_SECONDS = 0.5;
-
-function generateLetters(count: number): string[] {
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  return Array.from({ length: count }, () =>
-    letters[Math.floor(Math.random() * letters.length)]
-  );
-}
+import {
+  TOTAL_CHARS,
+  PENALTY_SECONDS,
+  generateLetters,
+  isValidLetterKey,
+  processKeyPress,
+  calculateFinalTime,
+  isNewBestScore,
+  getBestScoreStorageKey,
+} from "../lib/gameLogic";
 
 type GameState = "idle" | "playing" | "finished";
 
@@ -39,7 +39,7 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
 
   // User-scoped storage key helper (prevents score sharing between accounts)
   const getStorageKey = useCallback(() => {
-    return user?.id ? `typing_game_best_score_${user.id}` : "typing_game_best_score_guest";
+    return getBestScoreStorageKey(user?.id);
   }, [user?.id]);
 
   // Sync best score when switching users or logging in/out
@@ -106,12 +106,12 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
   const finishGame = useCallback(async () => {
     if (startTimeRef.current === null) return;
     const rawElapsed = (Date.now() - startTimeRef.current) / 1000;
-    const total = parseFloat((rawElapsed + penaltyRef.current).toFixed(2));
+    const total = calculateFinalTime(rawElapsed, penaltyRef.current);
 
     setState("finished");
     setFinalTime(total);
 
-    const isSuccess = bestScore === null || total < bestScore;
+    const isSuccess = isNewBestScore(total, bestScore);
     setResult(isSuccess ? "success" : "failure");
 
     if (isSuccess) {
@@ -144,20 +144,17 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.repeat) return;
+      if (!isValidLetterKey(e.key)) return;
 
-      const key = e.key.toUpperCase();
-      if (key.length !== 1 || key < "A" || key > "Z") return;
+      const { isCorrect, nextIndex, isComplete } = processKeyPress(
+        sequence,
+        currentIndex,
+        e.key
+      );
 
-      const expected = sequence[currentIndex];
-
-      if (key === expected) {
-        const nextIndex = currentIndex + 1;
-        if (nextIndex >= TOTAL_CHARS) {
-          setCurrentIndex(nextIndex);
-          finishGame();
-        } else {
-          setCurrentIndex(nextIndex);
-        }
+      if (isCorrect) {
+        setCurrentIndex(nextIndex);
+        if (isComplete) finishGame();
       } else {
         wrongRef.current += 1;
         penaltyRef.current += PENALTY_SECONDS;
