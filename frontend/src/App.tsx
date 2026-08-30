@@ -5,12 +5,13 @@ import { TypingGame } from "./components/TypingGame";
 import { Leaderboard } from "./components/Leaderboard";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
+import { GameStats } from "./components/GameStats";
 
 function App() {
   const { user, logout } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0);
+  const [resultsRefreshKey, setResultsRefreshKey] = useState(0);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const stored = localStorage.getItem("theme");
     if (stored === "light" || stored === "dark") return stored;
@@ -61,20 +62,24 @@ function App() {
         </section>
 
         <div className="flex flex-col lg:flex-row gap-6 items-start justify-center w-full">
-          {/* Spacer to balance the layout and perfectly center the game card */}
-          <div className="hidden lg:block flex-1 max-w-[340px]"></div>
-
-          <div className="w-full max-w-xl mx-auto lg:mx-0 shrink-0">
-            <TypingGame
-              onResultSaved={() => setLeaderboardRefreshKey((key) => key + 1)}
+          <div className="w-full max-w-xl mx-auto lg:mx-0 lg:flex-1 lg:max-w-[340px] order-2 lg:order-none">
+            <GameStats
+              onOpenAuth={openAuth}
+              refreshKey={resultsRefreshKey}
             />
           </div>
 
-          <div className="w-full max-w-xl mx-auto lg:mx-0 lg:flex-1 lg:max-w-[340px]">
+          <div className="w-full max-w-xl mx-auto lg:mx-0 shrink-0 order-1 lg:order-none">
+            <TypingGame
+              onResultSaved={() => setResultsRefreshKey((key) => key + 1)}
+            />
+          </div>
+
+          <div className="w-full max-w-xl mx-auto lg:mx-0 lg:flex-1 lg:max-w-[340px] order-3 lg:order-none">
             <Leaderboard
               userEmail={user?.email}
               onOpenAuth={openAuth}
-              refreshKey={leaderboardRefreshKey}
+              refreshKey={resultsRefreshKey}
             />
           </div>
         </div>

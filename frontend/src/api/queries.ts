@@ -62,6 +62,19 @@ export const MY_BEST_SCORE_QUERY = /* GraphQL */ `
   }
 `;
 
+export const MY_GAME_STATS_QUERY = /* GraphQL */ `
+  query MyGameStats {
+    myGameStats {
+      gamesPlayed
+      bestTime
+      averageTime
+      averageWrongAttempts
+      averagePenaltyTime
+      lastPlayedAt
+    }
+  }
+`;
+
 export const LEADERBOARD_QUERY = /* GraphQL */ `
   query Leaderboard($limit: Int) {
     leaderboard(limit: $limit) {

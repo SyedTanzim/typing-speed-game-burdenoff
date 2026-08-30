@@ -15,6 +15,7 @@ you can, beat your best time, and climb the leaderboard.
 - Account system to save results server-side and appear on the leaderboard
 - Global leaderboard ranked by best time (ascending — lower is better)
 - Personal game history per account
+- Personal statistics and analytics per account
 
 ## Tech Stack
 
@@ -118,6 +119,7 @@ VITE_API_URL="http://localhost:4000/graphql"
 | `saveGameResult`      | Mutation | Yes            | Save a completed game's result        |
 | `myGameHistory`       | Query    | Yes            | The authenticated user's past results |
 | `myBestScore`         | Query    | Yes            | The authenticated user's best time    |
+| `myGameStats`         | Query    | Yes            | The authenticated user's game stats   |
 | `leaderboard(limit)`  | Query    | No             | Top best times across all users       |
 
 A user can only ever read or write their own game data — history and best

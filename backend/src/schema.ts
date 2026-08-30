@@ -25,6 +25,15 @@ const typeDefs = /* GraphQL */ `
     bestTime: Float!
   }
 
+  type GameStats {
+    gamesPlayed: Int!
+    bestTime: Float
+    averageTime: Float
+    averageWrongAttempts: Float
+    averagePenaltyTime: Float
+    lastPlayedAt: String
+  }
+
   type AuthPayload {
     token: String!
     user: User!
@@ -34,6 +43,7 @@ const typeDefs = /* GraphQL */ `
     me: User
     myGameHistory: [GameResult!]!
     myBestScore: GameResult
+    myGameStats: GameStats!
     leaderboard(limit: Int): [LeaderboardEntry!]!
   }
 
@@ -63,6 +73,10 @@ function requireAuth(ctx: GraphQLContext): string {
   return ctx.userId;
 }
 
+function roundToTwo(value: number): number {
+  return Number(value.toFixed(2));
+}
+
 const resolvers = {
   Query: {
     me: async (_parent: unknown, _args: unknown, ctx: GraphQLContext) => {
@@ -89,6 +103,43 @@ const resolvers = {
           timeSeconds: "asc",
         },
       });
+    },
+
+    myGameStats: async (_parent: unknown, _args: unknown, ctx: GraphQLContext) => {
+      const userId = requireAuth(ctx);
+      const results = await ctx.prisma.gameResult.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (results.length === 0) {
+        return {
+          gamesPlayed: 0,
+          bestTime: null,
+          averageTime: null,
+          averageWrongAttempts: null,
+          averagePenaltyTime: null,
+          lastPlayedAt: null,
+        };
+      }
+
+      const totals = results.reduce(
+        (acc, result) => ({
+          timeSeconds: acc.timeSeconds + result.timeSeconds,
+          wrongAttempts: acc.wrongAttempts + result.wrongAttempts,
+          penaltyTime: acc.penaltyTime + result.penaltyTime,
+        }),
+        { timeSeconds: 0, wrongAttempts: 0, penaltyTime: 0 }
+      );
+
+      return {
+        gamesPlayed: results.length,
+        bestTime: Math.min(...results.map((result) => result.timeSeconds)),
+        averageTime: roundToTwo(totals.timeSeconds / results.length),
+        averageWrongAttempts: roundToTwo(totals.wrongAttempts / results.length),
+        averagePenaltyTime: roundToTwo(totals.penaltyTime / results.length),
+        lastPlayedAt: results[0]!.createdAt.toISOString(),
+      };
     },
 
     leaderboard: async (

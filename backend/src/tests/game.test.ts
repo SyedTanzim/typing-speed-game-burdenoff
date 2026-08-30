@@ -192,6 +192,61 @@ describe("Query.myBestScore - high-score calculation (real resolver)", () => {
   });
 });
 
+describe("Query.myGameStats - analytics (real resolver)", () => {
+  test("rejects an unauthenticated request", async () => {
+    const prisma = createFakePrisma();
+
+    await expect(resolvers.Query.myGameStats(null, {}, makeCtx(prisma, null))).rejects.toThrow(
+      "Not authenticated"
+    );
+  });
+
+  test("returns an empty analytics summary when the user has no games yet", async () => {
+    const prisma = createFakePrisma();
+
+    const stats = await resolvers.Query.myGameStats(null, {}, makeCtx(prisma, "user-1"));
+
+    expect(stats).toEqual({
+      gamesPlayed: 0,
+      bestTime: null,
+      averageTime: null,
+      averageWrongAttempts: null,
+      averagePenaltyTime: null,
+      lastPlayedAt: null,
+    });
+  });
+
+  test("derives averages and best time from the authenticated user's own results", async () => {
+    const prisma = createFakePrisma();
+    const ctx = makeCtx(prisma, "user-1");
+
+    await resolvers.Mutation.saveGameResult(
+      null,
+      { timeSeconds: 12.25, correctChars: 20, wrongAttempts: 3, penaltyTime: 1.5 },
+      ctx
+    );
+    await resolvers.Mutation.saveGameResult(
+      null,
+      { timeSeconds: 8.5, correctChars: 20, wrongAttempts: 1, penaltyTime: 0.5 },
+      ctx
+    );
+    await resolvers.Mutation.saveGameResult(
+      null,
+      { timeSeconds: 10.75, correctChars: 20, wrongAttempts: 2, penaltyTime: 1.0 },
+      makeCtx(prisma, "user-2")
+    );
+
+    const stats = await resolvers.Query.myGameStats(null, {}, ctx);
+
+    expect(stats.gamesPlayed).toBe(2);
+    expect(stats.bestTime).toBe(8.5);
+    expect(stats.averageTime).toBe(10.38);
+    expect(stats.averageWrongAttempts).toBe(2);
+    expect(stats.averagePenaltyTime).toBe(1);
+    expect(typeof stats.lastPlayedAt).toBe("string");
+  });
+});
+
 describe("Query.leaderboard - leaderboard ordering (real resolver)", () => {
   test("orders entries ascending by best time (lower time is better)", async () => {
     const prisma = createFakePrisma();
