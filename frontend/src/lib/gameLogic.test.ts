@@ -8,7 +8,6 @@ import {
   calculatePenalty,
   calculateFinalTime,
   isNewBestScore,
-  getBestScoreStorageKey,
 } from "./gameLogic";
 
 describe("generateLetters", () => {
@@ -114,17 +113,3 @@ describe("isNewBestScore - high-score calculation", () => {
   });
 });
 
-describe("getBestScoreStorageKey", () => {
-  test("builds a per-user key when a userId is given", () => {
-    expect(getBestScoreStorageKey("user-42")).toBe("typing_game_best_score_user-42");
-  });
-
-  test("falls back to a shared guest key when there is no userId", () => {
-    expect(getBestScoreStorageKey(null)).toBe("typing_game_best_score_guest");
-    expect(getBestScoreStorageKey(undefined)).toBe("typing_game_best_score_guest");
-  });
-
-  test("different users get different, non-colliding keys", () => {
-    expect(getBestScoreStorageKey("user-1")).not.toBe(getBestScoreStorageKey("user-2"));
-  });
-});

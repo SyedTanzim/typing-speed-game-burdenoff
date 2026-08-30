@@ -11,8 +11,8 @@ you can, beat your best time, and climb the leaderboard.
 
 - Timed 20-letter typing challenge with live progress tracking
 - 0.5s penalty per incorrect keystroke, added live to the running timer
-- Local best-score tracking (works fully as a guest, no account needed)
-- Optional account system to save results server-side and appear on the leaderboard
+- Guest play without persisted browser-side best-score storage
+- Account system to save results server-side and appear on the leaderboard
 - Global leaderboard ranked by best time (ascending — lower is better)
 - Personal game history per account
 
@@ -135,14 +135,13 @@ score are always scoped to the authenticated user via the JWT in the
 - A **lower** final score is a **better** score
 - Your personal best is compared against your final score; beating it shows
   "Success," otherwise "Failure — Try Again"
-- Best score is always saved locally (works even without an account);
-  logged-in users additionally get every result saved to the database and
-  reflected on the leaderboard
+- Best score is derived from authenticated database results; guest play is
+  session-only and does not trust browser storage for a persisted best
 
 ## Key Technical Decisions
 
 - **Guest play by default.** The game is fully playable without an account —
-  authentication only gates server-side history and the leaderboard. This
+  authentication gates persisted best scores, server-side history, and the leaderboard. This
   matches the assignment's emphasis on the core game loop while still meeting
   every auth requirement.
 - **JWT in localStorage, not httpOnly cookies.** Simpler to implement correctly

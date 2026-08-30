@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getClient } from "../api/graphqlClient";
-import { SAVE_GAME_RESULT_MUTATION } from "../api/queries";
+import { MY_BEST_SCORE_QUERY, SAVE_GAME_RESULT_MUTATION } from "../api/queries";
 import {
   TOTAL_CHARS,
   PENALTY_SECONDS,
@@ -10,7 +10,6 @@ import {
   processKeyPress,
   calculateFinalTime,
   isNewBestScore,
-  getBestScoreStorageKey,
 } from "../lib/gameLogic";
 
 type GameState = "idle" | "playing" | "finished";
@@ -37,41 +36,36 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
   const penaltyRef = useRef(0);
   const wrongRef = useRef(0);
 
-  // User-scoped storage key helper (prevents score sharing between accounts)
-  const getStorageKey = useCallback(() => {
-    return getBestScoreStorageKey(user?.id);
-  }, [user?.id]);
-
-  // Sync best score when switching users or logging in/out
+  // The persisted best score comes from the database for authenticated users.
   useEffect(() => {
-    const loadBestScore = async () => {
-      const key = getStorageKey();
-      const stored = localStorage.getItem(key);
-      let currentBest = stored ? parseFloat(stored) : null;
+    let cancelled = false;
 
-      if (token) {
-        try {
-          const client = getClient(token);
-          const data = await client.request<{ myBestScore?: { timeSeconds: number } | null }>(
-            `query { myBestScore { timeSeconds } }`
-          );
-          if (data?.myBestScore?.timeSeconds) {
-            const serverBest = data.myBestScore.timeSeconds;
-            if (currentBest === null || serverBest < currentBest) {
-              currentBest = serverBest;
-              localStorage.setItem(key, serverBest.toFixed(2));
-            }
-          }
-        } catch (err) {
-          console.error("Failed to fetch user best score:", err);
-        }
+    const loadBestScore = async () => {
+      if (!token) {
+        setBestScore(null);
+        return;
       }
 
-      setBestScore(currentBest);
+      try {
+        const client = getClient(token);
+        const data = await client.request<{ myBestScore?: { timeSeconds: number } | null }>(
+          MY_BEST_SCORE_QUERY
+        );
+        if (!cancelled) {
+          setBestScore(data.myBestScore?.timeSeconds ?? null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user best score:", err);
+        if (!cancelled) setBestScore(null);
+      }
     };
 
     loadBestScore();
-  }, [user?.id, token, getStorageKey]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, token]);
 
   const startGame = useCallback(() => {
     setSequence(generateLetters(TOTAL_CHARS));
@@ -114,11 +108,6 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
     const isSuccess = isNewBestScore(total, bestScore);
     setResult(isSuccess ? "success" : "failure");
 
-    if (isSuccess) {
-      setBestScore(total);
-      localStorage.setItem(getStorageKey(), total.toFixed(2));
-    }
-
     if (token) {
       setSaving(true);
       try {
@@ -129,14 +118,19 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
           wrongAttempts: wrongRef.current,
           penaltyTime: parseFloat(penaltyRef.current.toFixed(2)),
         });
+        if (isSuccess) {
+          setBestScore(total);
+        }
         onResultSaved?.();
       } catch (err) {
         console.error("Failed to save game result:", err);
       } finally {
         setSaving(false);
       }
+    } else if (isSuccess) {
+      setBestScore(total);
     }
-  }, [token, bestScore, onResultSaved, getStorageKey]);
+  }, [token, bestScore, onResultSaved]);
 
   // Keyboard event handler
   useEffect(() => {

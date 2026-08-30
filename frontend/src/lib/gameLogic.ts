@@ -80,8 +80,3 @@ export function isNewBestScore(
 ): boolean {
   return previousBest === null || finalTime < previousBest;
 }
-
-/** Builds the per-user (or guest) localStorage key used to persist best scores. */
-export function getBestScoreStorageKey(userId: string | undefined | null): string {
-  return userId ? `typing_game_best_score_${userId}` : "typing_game_best_score_guest";
-}

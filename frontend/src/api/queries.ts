@@ -54,6 +54,14 @@ export const MY_HISTORY_QUERY = /* GraphQL */ `
   }
 `;
 
+export const MY_BEST_SCORE_QUERY = /* GraphQL */ `
+  query MyBestScore {
+    myBestScore {
+      timeSeconds
+    }
+  }
+`;
+
 export const LEADERBOARD_QUERY = /* GraphQL */ `
   query Leaderboard($limit: Int) {
     leaderboard(limit: $limit) {

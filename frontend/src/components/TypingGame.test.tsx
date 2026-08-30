@@ -1,13 +1,18 @@
-import { describe, test, expect, beforeEach } from "vitest";
+import { describe, test, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { TypingGame } from "./TypingGame";
 import { AuthProvider } from "../context/AuthContext";
-import { getBestScoreStorageKey } from "../lib/gameLogic";
+
+const requestMock = vi.hoisted(() => vi.fn());
+
+vi.mock("../api/graphqlClient", () => ({
+  API_ENDPOINT: "http://localhost:4000/graphql",
+  getClient: vi.fn(() => ({ request: requestMock })),
+}));
 
 // Wrapped in AuthProvider since TypingGame reads the auth token via useAuth().
-// No user is logged in during these tests (localStorage starts empty), so
-// the component never attempts a network call to save the result — only
-// local, client-side game behavior is exercised here.
+// Most tests run as a guest (localStorage starts empty), so the component
+// never attempts a network call to save the result.
 function renderGame() {
   return render(
     <AuthProvider>
@@ -26,10 +31,20 @@ function anyWrongLetterFor(correct: string): string {
   return correct === "A" ? "B" : "A";
 }
 
-const GUEST_KEY = getBestScoreStorageKey(null);
+const LEGACY_GUEST_BEST_KEY = "typing_game_best_score_guest";
 
 beforeEach(() => {
   localStorage.clear();
+  requestMock.mockReset();
+  requestMock.mockImplementation((query: string) => {
+    if (query.includes("MyBestScore")) {
+      return Promise.resolve({ myBestScore: null });
+    }
+    if (query.includes("SaveGameResult")) {
+      return Promise.resolve({ saveGameResult: { id: "result-1", timeSeconds: 1 } });
+    }
+    return Promise.resolve({});
+  });
 });
 
 describe("game start and idle state", () => {
@@ -147,7 +162,7 @@ describe("game completion", () => {
 });
 
 describe("high-score calculation", () => {
-  test("the first completed game is always shown as a Success and stored as best", async () => {
+  test("the first completed guest game is shown as a Success without storing a browser best", async () => {
     renderGame();
     fireEvent.click(screen.getByText("Start Game"));
     for (let i = 0; i < 20; i++) {
@@ -156,28 +171,39 @@ describe("high-score calculation", () => {
 
     expect(screen.getByText("Success!")).toBeInTheDocument();
     await waitFor(() => {
-      expect(localStorage.getItem(GUEST_KEY)).not.toBeNull();
+      expect(screen.getByText(/Your best/)).toBeInTheDocument();
     });
+    expect(localStorage.getItem(LEGACY_GUEST_BEST_KEY)).toBeNull();
   });
 
-  test("a manually seeded, unbeatable best score results in Failure — Try Again", async () => {
-    // Seed an unbeatable best score (0.01s) before the game is even rendered.
-    localStorage.setItem(GUEST_KEY, "0.01");
+  test("a manually seeded browser best score does not affect the result", () => {
+    localStorage.setItem(LEGACY_GUEST_BEST_KEY, "0.01");
 
     renderGame();
-    // bestScore loads asynchronously (a useEffect reads localStorage), so
-    // wait for it to actually be reflected in the UI before starting —
-    // otherwise the game could start before bestScore state updates.
-    await screen.findByText("0.01s");
+    expect(screen.queryByText("0.01s")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Start Game"));
     for (let i = 0; i < 20; i++) {
       fireEvent.keyDown(window, { key: getCurrentLetter() });
     }
 
-    expect(screen.getByText("Failure — Try Again")).toBeInTheDocument();
-    // The stored best score should be unchanged since it wasn't beaten.
-    expect(localStorage.getItem(GUEST_KEY)).toBe("0.01");
+    expect(screen.getByText("Success!")).toBeInTheDocument();
+    expect(localStorage.getItem(LEGACY_GUEST_BEST_KEY)).toBe("0.01");
+  });
+
+  test("loads an authenticated user's best score from the database", async () => {
+    localStorage.setItem("token", "token-1");
+    localStorage.setItem("user", JSON.stringify({ id: "user-1", email: "a@example.com" }));
+    requestMock.mockImplementation((query: string) => {
+      if (query.includes("MyBestScore")) {
+        return Promise.resolve({ myBestScore: { timeSeconds: 7.25 } });
+      }
+      return Promise.resolve({ saveGameResult: { id: "result-1", timeSeconds: 9.5 } });
+    });
+
+    renderGame();
+
+    expect(await screen.findByText("7.25s")).toBeInTheDocument();
   });
 
   test("restarting via Play Again resets progress for a new round", () => {
