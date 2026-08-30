@@ -5,11 +5,11 @@ export function Footer() {
   return (
     <footer
       id="about"
-      className="border-t border-violet-200 mt-3 px-4 md:px-8 py-6 max-w-5xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-500 text-sm"
+      className="border-t border-violet-200 dark:border-slate-800 mt-3 px-4 md:px-8 py-6 max-w-5xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-500 dark:text-slate-400 text-sm transition-colors"
     >
       <p className="m-0">© {year} Syed Tanzim Wajih. All rights reserved.</p>
       <a
-        className="inline-flex items-center gap-1.5 text-slate-500 no-underline hover:text-violet-600 transition-colors"
+        className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400 no-underline hover:text-violet-600 dark:hover:text-violet-300 transition-colors"
         href={githubUrl}
         target="_blank"
         rel="noopener noreferrer"

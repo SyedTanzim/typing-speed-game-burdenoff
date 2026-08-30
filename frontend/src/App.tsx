@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "./context/AuthContext";
 import { Auth } from "./components/Auth";
 import { TypingGame } from "./components/TypingGame";
@@ -11,6 +11,15 @@ function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [leaderboardRefreshKey, setLeaderboardRefreshKey] = useState(0);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const stored = localStorage.getItem("theme");
+    if (stored === "light" || stored === "dark") return stored;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   function openAuth(mode: "login" | "register") {
     setAuthMode(mode);
@@ -19,26 +28,34 @@ function App() {
 
   return (
     <div
-      className="min-h-screen bg-violet-50 flex flex-col"
+      className={`${theme === "dark" ? "dark" : ""} min-h-screen flex flex-col transition-colors duration-300`}
       style={{
         background:
-          "radial-gradient(circle at 94% 0%, #ede9fe 0, transparent 28rem), #f5f3ff",
+          theme === "dark"
+            ? "radial-gradient(circle at 94% 0%, rgba(124, 58, 237, 0.24) 0, transparent 28rem), #070a14"
+            : "radial-gradient(circle at 94% 0%, #ede9fe 0, transparent 28rem), #f5f3ff",
       }}
     >
-      <Navbar userEmail={user?.email} onLogout={logout} onOpenAuth={openAuth} />
+      <Navbar
+        userEmail={user?.email}
+        onLogout={logout}
+        onOpenAuth={openAuth}
+        theme={theme}
+        onToggleTheme={() => setTheme((current) => current === "dark" ? "light" : "dark")}
+      />
 
       <main className="w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-10 flex-1">
         <section className="text-center mb-6" aria-labelledby="page-title">
-          <span className="text-violet-600 text-xs font-bold tracking-widest uppercase">
+          <span className="text-violet-600 dark:text-violet-300 text-xs font-bold tracking-widest uppercase">
             FOCUS MODE
           </span>
           <h1
             id="page-title"
-            className="mt-2 text-4xl md:text-5xl font-extrabold text-indigo-950 leading-tight tracking-tight"
+            className="mt-2 text-4xl md:text-5xl font-extrabold text-indigo-950 dark:text-white leading-tight tracking-tight"
           >
             Build speed, one key at a time.
           </h1>
-          <p className="mt-3 text-slate-500 max-w-md mx-auto leading-relaxed">
+          <p className="mt-3 text-slate-500 dark:text-slate-300 max-w-md mx-auto leading-relaxed">
             Type the displayed letters as quickly and accurately as you can.
           </p>
         </section>
@@ -67,7 +84,7 @@ function App() {
 
       {authOpen && !user && (
         <div
-          className="fixed inset-0 bg-black/40 z-50 grid place-items-center p-5"
+          className="fixed inset-0 bg-black/40 dark:bg-black/70 z-50 grid place-items-center p-5"
           onClick={() => setAuthOpen(false)}
         >
           <div

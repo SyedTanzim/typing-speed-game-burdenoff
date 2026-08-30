@@ -167,28 +167,28 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
 
   return (
     <section
-      className="bg-white/90 border border-violet-100 rounded-2xl shadow-lg p-5 text-center min-h-[380px] flex flex-col"
+      className="bg-white/90 dark:bg-slate-950/88 border border-violet-100 dark:border-slate-800 rounded-2xl shadow-lg dark:shadow-black/25 p-5 text-center min-h-[380px] flex flex-col transition-colors"
       aria-labelledby="game-title"
     >
       {/* Card heading */}
       <div className="flex items-start justify-between text-left">
         <div>
-          <span className="text-violet-600 text-xs font-bold tracking-widest uppercase">
+          <span className="text-violet-600 dark:text-violet-300 text-xs font-bold tracking-widest uppercase">
             QUICK CHALLENGE
           </span>
-          <h2 id="game-title" className="m-0 text-2xl font-bold text-indigo-950">
+          <h2 id="game-title" className="m-0 text-2xl font-bold text-indigo-950 dark:text-white">
             Typing sprint
           </h2>
         </div>
-        <span className="bg-violet-50 text-slate-500 text-xs font-bold rounded-lg px-2.5 py-1.5">
+        <span className="bg-violet-50 dark:bg-violet-500/15 text-slate-500 dark:text-slate-300 text-xs font-bold rounded-lg px-2.5 py-1.5">
           20 letters
         </span>
       </div>
 
       {/* Best score - Top position (Playing/Finished) */}
       {bestScore !== null && state !== "idle" && (
-        <p className="text-slate-500 text-sm mt-3 mb-1 shrink-0 text-left">
-          Your best <strong className="text-violet-600 ml-1">{bestScore.toFixed(2)}s</strong>
+        <p className="text-slate-500 dark:text-slate-300 text-sm mt-3 mb-1 shrink-0 text-left">
+          Your best <strong className="text-violet-600 dark:text-violet-300 ml-1">{bestScore.toFixed(2)}s</strong>
         </p>
       )}
 
@@ -198,11 +198,11 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
         {state === "idle" && (
           <div className="flex flex-col items-center">
             {bestScore !== null ? (
-              <p className="text-slate-500 text-sm mb-4 mt-0">
-                Your best <strong className="text-violet-600 ml-1">{bestScore.toFixed(2)}s</strong>
+              <p className="text-slate-500 dark:text-slate-300 text-sm mb-4 mt-0">
+                Your best <strong className="text-violet-600 dark:text-violet-300 ml-1">{bestScore.toFixed(2)}s</strong>
               </p>
             ) : (
-              <p className="text-slate-400 text-sm mb-4 mt-0">
+              <p className="text-slate-400 dark:text-slate-500 text-sm mb-4 mt-0">
                 No best time recorded yet
               </p>
             )}
@@ -219,45 +219,45 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
         {state === "playing" && (
           <div className="w-full mt-1">
             <div className="grid grid-cols-2 text-left gap-3">
-              <div className="bg-violet-50/80 rounded-xl p-2.5 px-3">
-                <span className="block text-slate-500 text-[0.67rem] font-bold tracking-widest">
+              <div className="bg-violet-50/80 dark:bg-slate-900 rounded-xl p-2.5 px-3">
+                <span className="block text-slate-500 dark:text-slate-400 text-[0.67rem] font-bold tracking-widest">
                   TIME
                 </span>
-                <strong className="block mt-1 text-lg tabular-nums text-indigo-950">
+                <strong className="block mt-1 text-lg tabular-nums text-indigo-950 dark:text-white">
                   {displayTime.toFixed(2)}s
                 </strong>
               </div>
-              <div className="bg-violet-50/80 rounded-xl p-2.5 px-3">
-                <span className="block text-slate-500 text-[0.67rem] font-bold tracking-widest">
+              <div className="bg-violet-50/80 dark:bg-slate-900 rounded-xl p-2.5 px-3">
+                <span className="block text-slate-500 dark:text-slate-400 text-[0.67rem] font-bold tracking-widest">
                   PROGRESS
                 </span>
-                <strong className="block mt-1 text-lg tabular-nums text-indigo-950">
+                <strong className="block mt-1 text-lg tabular-nums text-indigo-950 dark:text-white">
                   {currentIndex} / {TOTAL_CHARS}
                 </strong>
               </div>
             </div>
 
             <div
-              className="h-1.5 bg-violet-100 rounded-full overflow-hidden my-3"
+              className="h-1.5 bg-violet-100 dark:bg-slate-800 rounded-full overflow-hidden my-3"
               aria-label={`${currentIndex} of ${TOTAL_CHARS} letters completed`}
             >
               <span
-                className="block h-full bg-violet-600 rounded-full transition-all duration-150"
+                className="block h-full bg-violet-600 dark:bg-violet-400 rounded-full transition-all duration-150"
                 style={{ width: `${(currentIndex / TOTAL_CHARS) * 100}%` }}
               />
             </div>
 
-            <p className="text-slate-500 text-sm">Press the key shown below</p>
+            <p className="text-slate-500 dark:text-slate-300 text-sm">Press the key shown below</p>
 
             <div
-              className="w-28 h-28 mx-auto my-3 grid place-items-center bg-violet-100 text-violet-900 rounded-3xl text-6xl font-bold leading-none shadow-[inset_0_0_0_1px_rgba(109,40,217,0.08)]"
+              className="w-28 h-28 mx-auto my-3 grid place-items-center bg-violet-100 dark:bg-violet-400/15 text-violet-900 dark:text-violet-100 rounded-3xl text-6xl font-bold leading-none shadow-[inset_0_0_0_1px_rgba(109,40,217,0.08)] dark:shadow-[inset_0_0_0_1px_rgba(167,139,250,0.25)]"
               aria-live="polite"
             >
               {sequence[currentIndex]}
             </div>
 
             {wrongAttempts > 0 && (
-              <p className="text-red-600 text-sm font-semibold">
+              <p className="text-red-600 dark:text-red-300 text-sm font-semibold">
                 Penalties: {wrongAttempts} (+{penaltyTime.toFixed(1)}s)
               </p>
             )}
@@ -270,24 +270,24 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
             <div
               className={`w-13 h-13 rounded-2xl grid place-items-center text-2xl font-bold ${
                 result === "success"
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-red-100 text-red-700"
+                  ? "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                  : "bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-300"
               }`}
               aria-hidden="true"
             >
               {result === "success" ? "✓" : "↻"}
             </div>
-            <p className="text-4xl font-bold tabular-nums text-indigo-950 m-0">
+            <p className="text-4xl font-bold tabular-nums text-indigo-950 dark:text-white m-0">
               {finalTime?.toFixed(2)}s
             </p>
-            <p className="text-lg font-bold text-indigo-950 m-0">
+            <p className="text-lg font-bold text-indigo-950 dark:text-white m-0">
               {result === "success" ? "Success!" : "Failure — Try Again"}
             </p>
-            <p className="text-slate-500 text-sm m-0">
+            <p className="text-slate-500 dark:text-slate-300 text-sm m-0">
               Correct: {TOTAL_CHARS} | Wrong: {wrongAttempts} | Penalty: {penaltyTime.toFixed(1)}s
             </p>
             {saving && (
-              <p className="text-slate-500 text-sm m-0">Saving result...</p>
+              <p className="text-slate-500 dark:text-slate-300 text-sm m-0">Saving result...</p>
             )}
             <button
               onClick={startGame}
