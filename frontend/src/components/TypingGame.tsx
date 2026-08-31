@@ -18,6 +18,10 @@ type TypingGameProps = {
   onResultSaved?: () => void;
 };
 
+/**
+ * Runs the complete typing-game lifecycle: loads the database-backed best score,
+ * tracks keyboard/timer state, calculates the final time, and saves results.
+ */
 export function TypingGame({ onResultSaved }: TypingGameProps) {
   const { token, user } = useAuth();
   const [sequence, setSequence] = useState<string[]>(() => generateLetters(TOTAL_CHARS));
@@ -36,10 +40,11 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
   const penaltyRef = useRef(0);
   const wrongRef = useRef(0);
 
-  // The persisted best score comes from the database for authenticated users.
+  // Loads the signed-in user's persisted best score; guests start with no saved best.
   useEffect(() => {
     let cancelled = false;
 
+    /** Requests the lowest saved time and ignores a late response after cleanup. */
     const loadBestScore = async () => {
       if (!token) {
         setBestScore(null);
@@ -67,6 +72,7 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
     };
   }, [user?.id, token]);
 
+  /** Resets all state and refs, generates a fresh sequence, and starts timing. */
   const startGame = useCallback(() => {
     setSequence(generateLetters(TOTAL_CHARS));
     setCurrentIndex(0);
@@ -81,7 +87,7 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
     setState("playing");
   }, []);
 
-  // Timer tick
+  // Updates the displayed raw elapsed time while playing and clears the interval afterward.
   useEffect(() => {
     if (state !== "playing") return;
 
@@ -97,6 +103,10 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
     };
   }, [state]);
 
+  /**
+   * Stops the game, adds penalties, compares the previous best, and persists
+   * the result for authenticated users before notifying parent panels to refresh.
+   */
   const finishGame = useCallback(async () => {
     if (startTimeRef.current === null) return;
     const rawElapsed = (Date.now() - startTimeRef.current) / 1000;
@@ -132,10 +142,11 @@ export function TypingGame({ onResultSaved }: TypingGameProps) {
     }
   }, [token, bestScore, onResultSaved]);
 
-  // Keyboard event handler
+  // Attaches game input only while playing and removes it when the game state changes.
   useEffect(() => {
     if (state !== "playing") return;
 
+    /** Advances correct keys; wrong keys keep the index and add a fixed penalty. */
     function handleKeyDown(e: KeyboardEvent) {
       if (e.repeat) return;
       if (!isValidLetterKey(e.key)) return;

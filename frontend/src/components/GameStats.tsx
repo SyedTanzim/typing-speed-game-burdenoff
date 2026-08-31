@@ -17,14 +17,17 @@ type GameStatsProps = {
   refreshKey?: number;
 };
 
+/** Formats an optional duration for display, using -- when no games exist. */
 function formatSeconds(value: number | null): string {
   return value === null ? "--" : `${value.toFixed(2)}s`;
 }
 
+/** Formats optional averages while removing an unnecessary trailing .00. */
 function formatNumber(value: number | null): string {
   return value === null ? "--" : value.toFixed(2).replace(/\.00$/, "");
 }
 
+/** Converts the backend timestamp into a short date in the user's locale. */
 function formatDate(value: string | null): string {
   if (!value) return "--";
   return new Intl.DateTimeFormat(undefined, {
@@ -33,6 +36,7 @@ function formatDate(value: string | null): string {
   }).format(new Date(value));
 }
 
+/** Loads and displays personal analytics for the currently authenticated user. */
 export function GameStats({ onOpenAuth, refreshKey = 0 }: GameStatsProps) {
   const { token, user } = useAuth();
   const [statsState, setStatsState] = useState<{
@@ -42,12 +46,14 @@ export function GameStats({ onOpenAuth, refreshKey = 0 }: GameStatsProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<{ userId: string; message: string } | null>(null);
 
+  // Refetches when the user changes or App signals that a new result was saved.
   useEffect(() => {
     if (!token || !user) return;
 
     let cancelled = false;
     const userId = user.id;
 
+    /** Requests personal stats and avoids updating state after effect cleanup. */
     async function load() {
       setLoading(true);
       try {

@@ -8,6 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// Account record. The password field stores a bcrypt hash, never plain text.
 model User {
   id        String       @id @default(uuid())
   email     String       @unique
@@ -16,6 +17,7 @@ model User {
   results   GameResult[]
 }
 
+/// One completed game owned by a User through the userId foreign key.
 model GameResult {
   id            String   @id @default(uuid())
   userId        String

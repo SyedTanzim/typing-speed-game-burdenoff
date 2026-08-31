@@ -23,6 +23,10 @@ type FakeGameResult = {
   createdAt: Date;
 };
 
+/**
+ * Creates an in-memory Prisma substitute so resolver tests can exercise database
+ * behavior deterministically without starting PostgreSQL.
+ */
 export function createFakePrisma() {
   const users: FakeUser[] = [];
   const results: FakeGameResult[] = [];

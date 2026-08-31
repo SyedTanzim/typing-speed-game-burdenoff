@@ -4,6 +4,7 @@ import { z } from "zod";
 import { hashPassword, verifyPassword, signToken } from "./utils/auth";
 import type { GraphQLContext } from "./context";
 
+// Public API contract: types describe response shapes; Query and Mutation expose operations.
 const typeDefs = /* GraphQL */ `
   type User {
     id: ID!
@@ -64,6 +65,7 @@ const credentialsSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+/** Guards private resolvers and returns the verified user ID from the request context. */
 function requireAuth(ctx: GraphQLContext): string {
   if (!ctx.userId) {
     throw new GraphQLError("Not authenticated", {
@@ -73,17 +75,20 @@ function requireAuth(ctx: GraphQLContext): string {
   return ctx.userId;
 }
 
+/** Keeps calculated analytics consistent with the two-decimal UI display. */
 function roundToTwo(value: number): number {
   return Number(value.toFixed(2));
 }
 
 const resolvers = {
   Query: {
+    // Returns the user identified by the JWT, or null for an unauthenticated request.
     me: async (_parent: unknown, _args: unknown, ctx: GraphQLContext) => {
       if (!ctx.userId) return null;
       return ctx.prisma.user.findUnique({ where: { id: ctx.userId } });
     },
 
+    // Loads only the authenticated user's results, newest game first.
     myGameHistory: async (_parent: unknown, _args: unknown, ctx: GraphQLContext) => {
       const userId = requireAuth(ctx);
       return ctx.prisma.gameResult.findMany({
@@ -92,6 +97,7 @@ const resolvers = {
       });
     },
 
+    // Finds the authenticated user's lowest recorded time, because lower is better.
     myBestScore: async (_parent: unknown, _args: unknown, ctx: GraphQLContext) => {
       if (!ctx.userId) return null;
 
@@ -105,6 +111,7 @@ const resolvers = {
       });
     },
 
+    // Derives personal totals and averages from all results owned by the current user.
     myGameStats: async (_parent: unknown, _args: unknown, ctx: GraphQLContext) => {
       const userId = requireAuth(ctx);
       const results = await ctx.prisma.gameResult.findMany({
@@ -142,6 +149,7 @@ const resolvers = {
       };
     },
 
+    // Selects each user's best result, ranks users by time, and applies the requested limit.
     leaderboard: async (
       _parent: unknown,
       args: { limit?: number },
@@ -172,6 +180,7 @@ const resolvers = {
   },
 
   Mutation: {
+    // Validates credentials, hashes the password, creates the user, and returns a signed JWT.
     register: async (
       _parent: unknown,
       args: { email: string; password: string },
@@ -202,6 +211,7 @@ const resolvers = {
       return { token: signToken(user.id), user };
     },
 
+    // Verifies an email/password pair and returns a fresh signed JWT on success.
     login: async (
       _parent: unknown,
       args: { email: string; password: string },
@@ -226,6 +236,7 @@ const resolvers = {
       return { token: signToken(user.id), user };
     },
 
+    // Validates and inserts a completed game under the user authenticated by the JWT.
     saveGameResult: async (
       _parent: unknown,
       args: {

@@ -22,11 +22,13 @@ const yoga = createYoga({
 
 const port = Number(process.env.PORT) || 4000;
 
+/** Removes database credentials before a health-check error is sent to clients. */
 function sanitizeErrorMessage(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return message.replace(/postgres(?:ql)?:\/\/[^@\s]+@/gi, "postgresql://***@");
 }
 
+// Starts the HTTP server, handles /health directly, and delegates /graphql to Yoga.
 const server = Bun.serve({
   port,
   async fetch(request) {

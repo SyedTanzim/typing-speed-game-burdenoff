@@ -6,6 +6,10 @@ export type GraphQLContext = {
   userId: string | null;
 };
 
+/**
+ * Builds the shared context passed to every resolver. It verifies the bearer
+ * token, when present, so resolvers can authorize requests with ctx.userId.
+ */
 export async function createContext(request: Request): Promise<GraphQLContext> {
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "").trim();

@@ -1,3 +1,4 @@
+/** Renders the current copyright year and a safe external link to the repository. */
 export function Footer() {
   const year = new Date().getFullYear();
   const githubUrl = "https://github.com/SyedTanzim/typing-speed-game-burdenoff";

@@ -7,6 +7,10 @@ import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
 import { GameStats } from "./components/GameStats";
 
+/**
+ * Composes the main page and coordinates shared UI concerns: authentication
+ * dialogs, theme selection, and refreshing result-dependent panels.
+ */
 function App() {
   const { user, logout } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
@@ -18,10 +22,12 @@ function App() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
 
+  // Persists the visual preference; unlike scores, theme is safe as client-only data.
   useEffect(() => {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
+  /** Opens the auth dialog directly in the requested login or registration mode. */
   function openAuth(mode: "login" | "register") {
     setAuthMode(mode);
     setAuthOpen(true);

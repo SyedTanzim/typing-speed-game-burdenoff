@@ -8,6 +8,7 @@ type AuthProps = {
   onSuccess?: () => void;
 };
 
+/** Converts GraphQL and network failures into a message suitable for the auth form. */
 function getAuthErrorMessage(err: unknown) {
   const graphQLError = (err as any)?.response?.errors?.[0]?.message;
   if (graphQLError) return graphQLError;
@@ -20,6 +21,7 @@ function getAuthErrorMessage(err: unknown) {
   return message || "Something went wrong";
 }
 
+/** Displays the login/register form and delegates authentication to AuthContext. */
 export function Auth({ initialMode = "login", onClose, onSuccess }: AuthProps) {
   const { login, register } = useAuth();
   const [mode, setMode] = useState<"login" | "register">(initialMode);
@@ -28,6 +30,7 @@ export function Auth({ initialMode = "login", onClose, onSuccess }: AuthProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  /** Submits the selected auth operation and reports loading, success, or error state. */
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);

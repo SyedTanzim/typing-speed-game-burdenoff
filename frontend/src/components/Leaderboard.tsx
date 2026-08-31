@@ -10,14 +10,17 @@ type LeaderboardProps = {
   refreshKey?: number;
 };
 
+/** Loads and renders the public top-ten ranking with loading, error, and empty states. */
 export function Leaderboard({ userEmail, onOpenAuth, refreshKey = 0 }: LeaderboardProps) {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Reloads after saved results and whenever the browser regains focus.
   useEffect(() => {
     let cancelled = false;
 
+    /** Fetches ranked entries and ignores responses received after cleanup. */
     async function load() {
       try {
         setError(null);

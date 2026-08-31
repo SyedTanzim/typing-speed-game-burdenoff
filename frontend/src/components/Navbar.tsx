@@ -6,6 +6,10 @@ type NavbarProps = {
   onToggleTheme: () => void;
 };
 
+/**
+ * Renders global navigation, theme switching, and the correct authentication
+ * actions for either a guest or signed-in user.
+ */
 export function Navbar({
   userEmail,
   onLogout,
